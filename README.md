@@ -2,8 +2,8 @@
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Badgerati/Fudge/master/LICENSE.txt)
 
-Picassio2 is a redesigned Picassio that is `code-over-config`.
-Instead of writing a JSON file with step to run, you can now import the Picassio2 module and write you steps in pure PowerShell. Giving you all the flexibility you could want!
+Picassio2 is a redesigned [Picassio](https://github.com/Badgerati/Picassio) that is `code-over-config`.
+Instead of writing a JSON file with steps to run, you can now import the Picassio2 module and write your steps in pure PowerShell. Giving you all the flexibility you could want!
 
 * [Installing Picassio2](#installing-picassio2)
 * [Features](#features)

@@ -159,3 +159,21 @@ Describe 'Write-PicassioHeader' {
         }
     }
 }
+
+Describe 'Write-PicassioSubHeader' {
+    Mock Write-Host { }
+
+    Context 'With a message' {
+        It 'Should write a message' {
+            Write-PicassioSubHeader -Message 'Tests'
+            Assert-MockCalled Write-Host -Times 1 -Scope It
+        }
+    }
+
+    Context 'With no message passed' {
+        It 'Should fail parameter validation' {
+            { Write-PicassioSubHeader -Message $null } | Should Throw 'The argument is null or empty'
+            Assert-MockCalled Write-Host -Times 0 -Scope It
+        }
+    }
+}

@@ -597,7 +597,7 @@ function Add-PicassioIISWebsiteBinding
         try
         {
             Push-Location 'IIS:\SslBindings'
-            Get-Item "Cert:\LocalMachine\My\$($thumbprint)" -ErrorAction Stop | New-Item $IPAddress!$Port -Force -ErrorAction Stop | Out-Null
+            Get-Item "Cert:\LocalMachine\My\$($thumbprint)" -ErrorAction Stop | New-Item $IPAddress!$Port!$SiteName -Force -ErrorAction Stop | Out-Null
         }
         finally
         {
@@ -677,7 +677,7 @@ function Remove-PicassioIISWebsiteBinding
         try
         {
             Push-Location 'IIS:\SslBindings'
-            Remove-Item $IPAddress!$Port -Force -ErrorAction Stop | Out-Null
+            Remove-Item $IPAddress!$Port!$SiteName -Force -ErrorAction Stop | Out-Null
         }
         finally
         {

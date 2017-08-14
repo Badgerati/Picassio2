@@ -142,3 +142,28 @@ function Write-PicassioHeader
 
     Write-Host ($output.ToUpperInvariant()) -ForegroundColor Magenta
 }
+
+
+<#
+    Writes a sub-header to the console (colour: magenta)
+#>
+function Write-PicassioSubHeader
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Message
+    )
+
+    $count = (65 - $Message.Length)
+    $output = "$($Message)>"
+    
+    if ($count -gt 0)
+    {
+        $padding = ('-' * $count)
+        $output = "-$($Message)$($padding)>"
+    }
+
+    Write-Host ($output.ToUpperInvariant()) -ForegroundColor Magenta
+}

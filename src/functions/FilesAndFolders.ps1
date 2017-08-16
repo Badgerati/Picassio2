@@ -203,3 +203,79 @@ function New-PicassioNetworkDrive
     Write-PicassioSuccess 'Network drive created'
     return "$($DriveName):"
 }
+
+
+<#
+#>
+function New-PicassioFileShare
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path,
+
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Permissions = 'Everyone,FULL',
+
+        [switch]
+        $Force
+    )
+
+    # ensure the path exists
+    Test-PicassioPath $Path -ThrowIfNotExists | Out-Null
+
+    # if we're forcing, attempt to delete share first
+    if ($Force)
+    {
+        Remove-PicassioFileShare -Name $Name
+    }
+
+    # attempt to create the share
+    Write-PicassioInfo "Creating new file share: $($Name)"
+    Write-PicassioMessage "> Path: $($Path)"
+
+    net share $Name=$Path /grant:$Permissions 2>&1>null
+    if (!$?)
+    {
+        throw "Failed to create share: $($Name)"
+    }
+
+    Write-PicassioSuccess "File share created"
+}
+
+<#
+#>
+function Remove-PicassioFileShare
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name
+    )
+
+    # if the share exists, remove it
+    if ((net share | Where-Object { $_ -ilike "$($Name)*" } | Measure-Object).Count -gt 0)
+    {
+        Write-PicassioInfo "Removing file share: $($Name)"
+
+        net share $Name /delete /y 2>&1>null
+        if (!$?)
+        {
+            throw "Failed to remove file share: $($Name)"
+        }
+
+        Write-PicassioSuccess "File share removed"
+    }
+    else
+    {
+        Write-PicassioInfo "File share doesn't exist: $($Name)"
+    }
+}

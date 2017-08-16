@@ -15,6 +15,13 @@ function Add-PicassioIISHosts
         $HostName
     )
 
+    # if the IP Address is a *, then don't do anything
+    if ($IPAddress -ieq '*')
+    {
+        Write-PicassioWarning "Skipping adding hosts entry, as IP address is everything: *"
+        return
+    }
+
     # check hosts file exists
     $hostsFile = "$($env:windir)\System32\drivers\etc\hosts"
     Test-PicassioPath $hostsFile -ThrowIfNotExists | Out-Null
@@ -30,7 +37,11 @@ function Add-PicassioIISHosts
     # if it doesn't exist, add it
     if ($entryExists -eq 0)
     {
-        ("`n$($IPAddress)`t`t$($Hostname)") | Out-File -FilePath $hostsFile -Encoding ASCII -Append
+        ("`n$($IPAddress)`t`t$($Hostname)") | Out-File -FilePath $hostsFile -Encoding ASCII -Append -ErrorAction Stop
+    }
+    else
+    {
+        Write-PicassioMessage 'Hosts entry already exists'
     }
 
     Write-PicassioSuccess 'Hosts entry added'
@@ -52,6 +63,13 @@ function Remove-PicassioIISHosts
         [string]
         $HostName
     )
+    
+    # if the IP Address is a *, then don't do anything
+    if ($IPAddress -ieq '*')
+    {
+        Write-PicassioWarning "Skipping removing hosts entry, as IP address is everything: *"
+        return
+    }
 
     # check hosts file exists
     $hostsFile = "$($env:windir)\System32\drivers\etc\hosts"
@@ -63,7 +81,7 @@ function Remove-PicassioIISHosts
     $rgxEntry = "^.*?$($IPAddress).*?$($Hostname).*?$"
 
     # add lines back into the hosts file where they don't match the regex
-    Get-Content $hostsFile | Where-Object { $_ -inotmatch $rgxEntry } | Out-File -FilePath $hostsFile -Encoding ASCII
+    Get-Content $hostsFile | Where-Object { $_ -inotmatch $rgxEntry } | Out-File -FilePath $hostsFile -Encoding ASCII -ErrorAction Stop
 
     Write-PicassioSuccess 'Hosts entry removed'
 }
@@ -393,6 +411,51 @@ function Get-PicassioIISWebsite
 
 <#
 #>
+function Get-PicassioIISWebsitePath
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $SiteName,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $AppName
+    )
+    
+    # IIS alterations must be done in 64-bit shells
+    Test-Win64 | Out-Null
+    Import-Module WebAdministration -ErrorAction Stop
+
+    # if the website doesn't exist return null
+    if (!(Test-PicassioIISWebsite -Name $SiteName))
+    {
+        Write-PicassioWarning "Website does not exist in IIS: $($SiteName)"
+        return $null
+    }
+
+    # if the app name is passed, check it exists else return null
+    if (!(Test-PicassioEmpty $AppName) -and !(Test-PicassioIISWebsiteApplication -Name $AppName -SiteName $SiteName))
+    {
+        Write-PicassioWarning "Website Application does not exist in IIS: $($AppName), under Website: $($SiteName)"
+        return $null
+    }
+
+    # otherwise, return the path of the app if it was passed
+    if (Test-PicassioEmpty $AppName)
+    {
+        return (Get-WebFilePath -PSPath "IIS:\Sites\$($SiteName)\$($AppName)" -ErrorAction Stop).FullName
+    }
+    
+    # else return the path of the site
+    return (Get-WebFilePath -PSPath "IIS:\Sites\$($SiteName)" -ErrorAction Stop).FullName
+}
+
+
+<#
+#>
 function Start-PicassioIISWebsite
 {
     param (
@@ -708,17 +771,17 @@ function Remove-PicassioIISWebsite
     Remove-PicassioIISWebsiteSslBindings -SiteName $Name
 
     # remove the site
-    Write-PicassioInfo "Removing website: $($Name)"
-
     if (Test-PicassioIISWebsite -SiteName $Name)
     {
+        Write-PicassioInfo "Removing Website: $($Name)"
         Remove-Website -Name $Name -ErrorAction Stop | Out-Null
-        Write-PicassioSuccess 'Website removed'
     }
     else
     {
         Write-PicassioInfo "Website already removed: $($Name)"
     }
+
+    Write-PicassioSuccess 'Website removed'
 
     # remove the app pool
     if (Test-PicassioIISAppPool -SiteName $Name)
@@ -781,7 +844,7 @@ function New-PicassioIISWebsite
     }
     else
     {
-        Write-PicassioInfo "Creating website: $($Name)"
+        Write-PicassioInfo "Creating Website: $($Name)"
         Write-PicassioMessage "> Path: $($PhysicalPath)"
 
         New-Website -Name $Name -PhysicalPath $PhysicalPath -ApplicationPool $pool -Force -ErrorAction Stop | Out-Null
@@ -798,4 +861,257 @@ function New-PicassioIISWebsite
 
     # inform success
     Write-PicassioSuccess 'Website created'
+}
+
+
+<#
+#>
+function Test-PicassioIISWebsiteApplication
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $SiteName,
+
+        [switch]
+        $ThrowIfNotExists
+    )
+
+    # IIS alterations must be done in 64-bit shells
+    Test-Win64 | Out-Null
+    Import-Module WebAdministration -ErrorAction Stop
+
+    # check the site exists
+    $exists = (Test-PicassioPath "IIS:\Sites\$($SiteName)")
+
+    if (!$exists -and $ThrowIfNotExists)
+    {
+        throw "No Website in IIS found for: $($SiteName)"
+    }
+
+    # check the app exists
+    $exists = (Test-PicassioPath "IIS:\Sites\$($SiteName)\$($Name)")
+    
+    if (!$exists -and $ThrowIfNotExists)
+    {
+        throw "No Website Application in IIS found for: $($Name), under Website: $($SiteName)"
+    }
+
+    return $exists
+}
+
+
+<#
+#>
+function New-PicassioIISWebsiteApplication
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $SiteName,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $PhysicalPath
+    )
+    
+    # IIS alterations must be done in 64-bit shells
+    Test-Win64 | Out-Null
+    Import-Module WebAdministration -ErrorAction Stop
+
+    # ensure the physical path exists
+    Test-PicassioPath $PhysicalPath -ThrowIfNotExists | Out-Null
+
+    # ensure the website exists
+    Test-PicassioIISWebsite -Name $SiteName -ThrowIfNotExists | Out-Null
+
+    # ensure the app pool exists
+    Test-PicassioIISAppPool -SiteName $SiteName -ThrowIfNotExists | Out-Null
+
+    # get the app pool name
+    $appPoolName = Get-PicassioIISAppPool -SiteName $SiteName
+
+    # create the web application
+    if (Test-PicassioIISWebsiteApplication -Name $Name -SiteName $SiteName)
+    {
+        Write-PicassioInfo "Website Application already created: $($Name), under Website: $($SiteName)"
+    }
+    else
+    {
+        Write-PicassioInfo "Creating Website Application: $($Name), under Website: $($SiteName)"
+        Write-PicassioMessage "> Path: $($PhysicalPath)"
+
+        New-WebApplication -Site $SiteName -Name $Name -PhysicalPath $PhysicalPath -ApplicationPool $appPoolName -Force -ErrorAction Stop | Out-Null
+    }
+
+    # setup acl for site path
+    Set-PicassioFileAccessRule -Path $PhysicalPath -User 'NT AUTHORITY\IUSR' -Permission 'ReadAndExecute' -Access 'Allow'
+    Set-PicassioFileAccessRule -Path $PhysicalPath -User "IIS APPPOOL\$($appPoolName)" -Permission 'ReadAndExecute' -Access 'Allow'
+
+    # start site and app pool
+    Restart-PicassioIISAppPool -Name $appPoolName
+    Start-PicassioIISWebsite -Name $SiteName -Restart
+
+    # inform success
+    Write-PicassioSuccess 'Website Application created'
+}
+
+
+<#
+#>
+function Remove-PicassioIISWebsiteApplication
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $SiteName
+    )
+
+    # IIS alterations must be done in 64-bit shells
+    Test-Win64 | Out-Null
+    Import-Module WebAdministration -ErrorAction Stop
+
+    # remove the site
+    if (Test-PicassioIISWebsiteApplication -Name $Name -SiteName $SiteName)
+    {
+        Write-PicassioInfo "Removing Website Application: $($Name), under Website: $($SiteName)"
+        Remove-WebApplication -Site $SiteName -Name $Name -ErrorAction Stop | Out-Null
+    }
+    else
+    {
+        Write-PicassioInfo "Website Application already removed: $($Name), under Website: $($SiteName)"
+    }
+
+    Write-PicassioSuccess 'Website Application removed'
+}
+
+
+<#
+#>
+function Update-PicassioIISPhysicalPath
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $SiteName,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $AppName,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $PhysicalPath,
+
+        [switch]
+        $SyncPathToAll
+    )
+
+    # IIS alterations must be done in 64-bit shells
+    Test-Win64 | Out-Null
+    Import-Module WebAdministration -ErrorAction Stop
+
+    # ensure the new physical path exists
+    Test-PicassioPath $PhysicalPath -ThrowIfNotExists | Out-Null
+
+    # ensure the website exists
+    Test-PicassioIISWebsite -Name $SiteName -ThrowIfNotExists | Out-Null
+
+    # ensure the web app exists (if passed)
+    $haveApp = !(Test-PicassioEmpty $AppName)
+    if ($haveApp)
+    {
+        Test-PicassioIISWebsiteApplication -Name $AppName -SiteName $SiteName -ThrowIfNotExists | Out-Null
+    }
+
+    # either update the one site/app, or sync to all that share old path
+    if (!$SyncPathToAll)
+    {
+        if ($haveApp)
+        {
+            Write-PicassioInfo "Updating physical path for Website Application: $($AppName), under Website: $($SiteName)"
+            Write-PicassioMessage "> Path: $($PhysicalPath)"
+            Set-ItemProperty -Path "IIS:\Sites\$($SiteName)\$($AppName)" -Name physicalPath -Value $PhysicalPath -Force -ErrorAction Stop | Out-Null
+        }
+        else
+        {
+            Write-PicassioInfo "Updating physical path for Website: $($SiteName)"
+            Write-PicassioMessage "> Path: $($PhysicalPath)"
+            Set-ItemProperty -Path "IIS:\Sites\$($SiteName)" -Name physicalPath -Value $PhysicalPath -Force -ErrorAction Stop | Out-Null
+        }
+
+        Write-PicassioSuccess "Physical path updated"
+    }
+    else
+    {
+        # get the current path
+        $currentPath = Get-PicassioIISWebsitePath -SiteName $SiteName -AppName $AppName
+
+        Write-PicassioInfo "Updating physical path for all Websites and Website Applications"
+        Write-PicassioMessage "> From: $($currentPath)"
+        Write-PicassioMessage ">   To: $($PhysicalPath)"
+
+        # get every website that references the current path
+        $sites = Get-Website | Select-Object Name, PhysicalPath | Where-Object { $_.PhysicalPath -ieq $currentPath } | Select-Object -ExpandProperty Name
+
+        if (($sites | Measure-Object).Count -gt 0)
+        {
+            foreach ($site in $sites)
+            {
+                if (Test-PicassioEmpty $site)
+                {
+                    continue
+                }
+
+                Write-PicassioMessage "Updating website: $($site)" -NoNewLine
+                Set-ItemProperty  "IIS:\Sites\$($site)" -Name physicalPath -Value $PhysicalPath -Force -ErrorAction Stop | Out-Null
+                Write-PicassioSuccess " > Updated"
+            }
+        }
+
+        # get every app that references the current path
+        $apps = Get-WebApplication | Where-Object { $_.PhysicalPath -ieq $currentPath }
+
+        if (($apps | Measure-Object).Count -gt 0)
+        {
+            foreach ($app in $apps)
+            {
+                if (Test-PicassioEmpty $app)
+                {
+                    continue
+                }
+                
+                $name = $app.path.Trim('/')
+                $site = $app.GetParentElement()['name']
+
+                Write-PicassioMessage "Updating app: $($name)" -NoNewLine
+                Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -Name physicalPath -Value $PhysicalPath -Force -ErrorAction Stop | Out-Null
+                Write-PicassioSuccess " > Updated"
+            }
+        }
+        
+        Write-PicassioSuccess "Physical paths updated"
+    }
 }

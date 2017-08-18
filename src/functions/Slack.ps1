@@ -213,3 +213,39 @@ function Send-PicassioSlackAttachments
 
     Write-PicassioSuccess "Attachment message sent"
 }
+
+
+<#
+#>
+function Get-PicassioSlackChannels
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $APIToken
+    )
+    
+    # endpoint
+    $endpoint = "$(Get-PicassioSlackEndpoint)/channels.list?token=$($APIToken)&exclude_archived=1"
+
+    # send the request
+    Write-PicassioInfo "Retrieving channels from Slack"
+
+    $response = Invoke-WebRequest -Method Get -Uri $endpoint -ContentType 'application/json' -UseBasicParsing -ErrorAction Stop
+    $result = (ConvertFrom-Json -InputObject ($response.Content))
+
+    if ($result.ok -ne $true)
+    {
+        if ($result -ne $null)
+        {
+            throw "Failed to retrieve channels from Slack: $($result.error)"
+        }
+        else
+        {
+            throw 'Failed to retrieve channels from Slack'
+        }
+    }
+
+    return $result.channels.name
+}

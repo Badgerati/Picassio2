@@ -1,4 +1,19 @@
 
+
+<#
+    Writes an line to the console
+#>
+function Write-PicassioEmpty
+{
+    param (
+        [switch]
+        $NoNewLine
+    )
+
+    Write-Host ([string]::Empty) -NoNewline:$NoNewLine
+}
+
+
 <#
     Writes a general message to the console (colour: white)
 #>

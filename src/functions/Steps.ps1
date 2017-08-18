@@ -50,7 +50,7 @@ function Invoke-Step
     try
     {
         # output step headers
-        Write-PicassioMessage ([string]::Empty)
+        Write-PicassioEmpty
         Write-PicassioHeader $Name
         Write-PicassioWarning "Computer: $ComputerName"
 
@@ -82,7 +82,7 @@ function Invoke-Step
         Write-PicassioMessage "Duration: $([datetime]::UtcNow - $start)"
 
         # blank line for neatness
-        Write-PicassioMessage ([string]::Empty)
+        Write-PicassioEmpty
     }
     catch [exception]
     {

@@ -27,18 +27,36 @@ Invoke-ParallelStep 'ParallelTest' @(
         Write-PicassioInfo 'PARA2'
     },
     {
-        Start-Sleep -Milliseconds 100
+        Start-Sleep -Milliseconds 20
         Write-PicassioInfo 'PARA3'
-    },
-    {
-        Write-PicassioInfo 'PARA4'
-    },
-    {
-        Write-PicassioInfo 'PARA5'
     }
 )
 
 Invoke-Step 'Windows Feature' {
     $exists = Test-PicassioWindowsFeatureInstalled -Name 'Web-Server' -Optional
     Write-Host "Installed: $($exists)"
+}
+
+Send-PicassioSlackMessage -Channel '<CHANNEL>' -Message 'It works!' -APIToken '<TOKEN>' -Colour 'danger'
+
+$fields = @(
+    @{
+        'title' = 'Status';
+        'value' = 'Success';
+        'short' = $true
+    },
+    @{
+        'title' = 'Date';
+        'value' = [datetime]::Now.ToShortDateString();
+        'short' = $true
+    },
+    @{
+        'title' = 'Reason';
+        'value' = 'Hey look, this works!';
+        'short' = $false
+    }
+)
+
+Invoke-Step 'Slack Message' {
+    Send-PicassioSlackAttachments -Channel '<CHANNEL>' -APIToken '<TOKEN>' -Colour 'good' -Fallback 'eek' -Fields $fields -Title 'Example Message'
 }

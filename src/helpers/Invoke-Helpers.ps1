@@ -62,3 +62,48 @@ function Invoke-PicassioCommand
         }
     }
 }
+
+
+<#
+#>
+function Invoke-PicassioWhich
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Command
+    )
+
+    return (Get-Command -Name $Command -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Definition)
+}
+
+
+<#
+#>
+function Invoke-PicassioRestEndpoint
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('Post', 'Get', 'Put', 'Patch', 'Delete')]
+        [string]
+        $Method,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Uri,
+
+        [object]
+        $Body = $null,
+
+        [hashtable]
+        $Headers = $null,
+
+        [object]
+        $ContentType = 'application/json'
+    )
+
+    $response = Invoke-WebRequest -Method $Method -Uri $Uri -Body $Body -Headers $Headers -ContentType $ContentType -UseBasicParsing -ErrorAction Stop
+    return (ConvertFrom-PicassioJson -Value $response.Content)
+}

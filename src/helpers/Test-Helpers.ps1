@@ -203,6 +203,12 @@ function Test-PicassioSoftware
 
     try
     {
+        $path = Invoke-PicassioWhich -Command (($Check -split ' ')[0])
+        if (!(Test-PicassioEmpty $path))
+        {
+            return $true
+        }
+        
         Invoke-Expression -Command $Check | Out-Null
         return $true
     }

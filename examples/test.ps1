@@ -8,7 +8,6 @@ $path = (Split-Path -Parent -Path (Split-Path -Parent -Path $MyInvocation.MyComm
 Import-Module "$($path)/src/Picassio2.psm1" -ErrorAction Stop
 
 
-
 Invoke-Step 'Single' {
     Write-PicassioWarning 'Ooh, its a warning!'
 }

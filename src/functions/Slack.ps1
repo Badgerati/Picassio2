@@ -68,9 +68,7 @@ function Send-PicassioSlackMessage
     Write-PicassioInfo "Sending message to Slack"
     Write-PicassioMessage "> Channel: $($Channel)"
 
-    $response = Invoke-WebRequest -Method Post -Uri $endpoint -Body $data -ContentType $null -UseBasicParsing -ErrorAction Stop
-    $result = (ConvertFrom-Json -InputObject ($response.Content))
-
+    $result = Invoke-PicassioRestEndpoint -Method Post -Uri $endpoint -Body $data -ContentType $null
     if ($result.ok -ne $true)
     {
         if ($result -ne $null)
@@ -196,9 +194,7 @@ function Send-PicassioSlackAttachments
     Write-PicassioInfo "Sending attachment message to Slack"
     Write-PicassioMessage "> Channel: $($Channel)"
 
-    $response = Invoke-WebRequest -Method Post -Uri $endpoint -Body $data -ContentType $null -UseBasicParsing -ErrorAction Stop
-    $result = (ConvertFrom-Json -InputObject ($response.Content))
-
+    $result = Invoke-PicassioRestEndpoint -Method Post -Uri $endpoint -Body $data -ContentType $null
     if ($result.ok -ne $true)
     {
         if ($result -ne $null)
@@ -232,9 +228,7 @@ function Get-PicassioSlackChannels
     # send the request
     Write-PicassioInfo "Retrieving channels from Slack"
 
-    $response = Invoke-WebRequest -Method Get -Uri $endpoint -ContentType 'application/json' -UseBasicParsing -ErrorAction Stop
-    $result = (ConvertFrom-Json -InputObject ($response.Content))
-
+    $result = Invoke-PicassioRestEndpoint -Method Get -Uri $endpoint
     if ($result.ok -ne $true)
     {
         if ($result -ne $null)

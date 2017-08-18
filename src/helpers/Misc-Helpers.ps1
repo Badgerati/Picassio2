@@ -34,3 +34,34 @@ function Format-PicassioJsonString
 
     return $Value
 }
+
+
+<#
+#>
+function ConvertFrom-PicassioJson
+{
+    param (
+        [string]
+        $Path,
+
+        [string]
+        $Value
+    )
+
+    if (!(Test-PicassioEmpty $Path))
+    {
+        $Value = Get-Content $Path -Force -ErrorAction Stop
+    }
+
+    Add-Type -Assembly System.Web.Extensions
+    $js = New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer
+    $js.MaxJsonLength = [int]::MaxValue
+
+    $json = $js.DeserializeObject($Value)
+    if (!$?)
+    {
+        throw 'Failed to deserialise the JSON value supplied'
+    }
+
+    return $json
+}

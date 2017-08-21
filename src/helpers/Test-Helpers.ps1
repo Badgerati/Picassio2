@@ -240,3 +240,58 @@ function Test-PicassioPathDirectory
 
     return ((Get-Item $Path) -is [System.IO.DirectoryInfo])
 }
+
+
+<#
+#>
+function Test-PicassioPowerShell
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path
+    )
+
+    # ensure that the path exists
+    Test-PicassioPath $Path -ThrowIfNotExists | Out-Null
+
+    # get all powershell scripts at the passed path
+    $scripts = (Get-ChildItem -Path $Path -Recurse -Filter '*.ps*1').FullName
+    if (Test-PicassioEmpty $scripts)
+    {
+        Write-PicassioWarning 'No PowerShell scripts were found at the passed path'
+        Write-PicassioMessage "> Path: $($Path)"
+        return $true
+    }
+
+    $failed = $false
+
+    # loop through each script and validate the powershell
+    foreach ($script in $scripts)
+    {
+        $content = Get-Content -Path $script
+        $errors = $null
+        [System.Management.Automation.PSParser]::Tokenize($content, [ref]$errors) | Out-Null
+
+        # were there any errors in the script?
+        if (!(Test-PicassioEmpty $errors))
+        {
+            $failed = $true
+            Write-PicassioError "Failure in: '$($script)'"
+            
+            $errors | ForEach-Object {
+                Write-PicassioWarning "> Line $($_.Token.StartLine): $($_.Message)"
+            }
+
+            Write-PicassioEmpty
+        }
+    }
+
+    if ($failed)
+    {
+        Write-PicassioWarning 'There are PowerShell scripts at the passed path with validation errors'
+    }
+
+    return !$failed
+}

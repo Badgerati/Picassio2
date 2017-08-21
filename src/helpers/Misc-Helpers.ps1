@@ -65,3 +65,28 @@ function ConvertFrom-PicassioJson
 
     return $json
 }
+
+
+<#
+#>
+function Set-PicassioSafeguard
+{
+    param (
+        [string]
+        $Value,
+
+        [string]
+        $Default = $null
+    )
+
+    if ($Value -eq $null)
+    {
+        $Value = [string]::Empty
+        if ($Default -ne $null)
+        {
+            $Value = $Default
+        }
+    }
+
+    return $Value
+}

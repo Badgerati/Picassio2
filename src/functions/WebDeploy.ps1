@@ -1,6 +1,14 @@
 
 <#
 #>
+function Get-PicassioWebDeployDefaultToolPath
+{
+    return 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe'
+}
+
+
+<#
+#>
 function Sync-PicassioWebDeployPaths
 {
     param (
@@ -32,10 +40,10 @@ function Sync-PicassioWebDeployPaths
         $Quiet
     )
 
-    # check that webdeploy is installed
+    # check that webdeploy tool is installed
     if (Test-PicassioEmpty $WebDeployPath)
     {
-        $WebDeployPath = 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe'
+        $WebDeployPath = Get-PicassioWebDeployDefaultToolPath
     }
 
     Test-PicassioPath $WebDeployPath -ThrowIfNotExists | Out-Null
@@ -117,7 +125,7 @@ function Sync-PicassioWebDeployServers
     # check that webdeploy is installed
     if (Test-PicassioEmpty $WebDeployPath)
     {
-        $WebDeployPath = 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe'
+        $WebDeployPath = Get-PicassioWebDeployDefaultToolPath
     }
 
     Test-PicassioPath $WebDeployPath -ThrowIfNotExists | Out-Null

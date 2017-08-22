@@ -13,6 +13,9 @@ function Invoke-PicassioCommand
         [string]
         $Arguments,
 
+        [string]
+        $Path,
+
         [switch]
         $ShowFullOutput,
 
@@ -22,43 +25,64 @@ function Invoke-PicassioCommand
 
     Write-PicassioInfo "Running: $($Command) $($Arguments)"
 
-    if ($UseCommandPrompt)
+    if (!(Test-PicassioEmpty $Path))
     {
-        $output = cmd.exe /C "`"$($Command)`" $($Arguments)"
-        $code = $LASTEXITCODE
+        Write-PicassioMessage "> Path: $($Path)"
+    }
 
-        if ($code -ne 0)
+    try
+    {
+        if (!(Test-PicassioEmpty $Path))
         {
-            if (!(Test-PicassioEmpty $output))
+            Test-PicassioPath $Path -ThrowIfNotExists | Out-Null
+            Push-Location $Path
+        }
+
+        if ($UseCommandPrompt)
+        {
+            $output = cmd.exe /C "`"$($Command)`" $($Arguments)"
+            $code = $LASTEXITCODE
+
+            if ($code -ne 0)
             {
-                if (!$ShowFullOutput)
+                if (!(Test-PicassioEmpty $output))
                 {
-                    $output = ($output | Select-Object -Last 200)
+                    if (!$ShowFullOutput)
+                    {
+                        $output = ($output | Select-Object -Last 200)
+                    }
+
+                    $output | ForEach-Object { Write-PicassioError $_ }
                 }
 
-                $output | ForEach-Object { Write-PicassioError $_ }
+                throw "Command '$($Command)' failed to complete. Exit code: $code"
             }
+        }
+        else
+        {
+            $output = powershell.exe /C "`"$($Command)`" $($Arguments)"
 
-            throw "Command '$($Command)' failed to complete. Exit code: $code"
+            if (!$?)
+            {
+                if (!(Test-PicassioEmpty $output))
+                {
+                    if (!$ShowFullOutput)
+                    {
+                        $output = ($output | Select-Object -Last 200)
+                    }
+
+                    $output | ForEach-Object { Write-PicassioError $_ }
+                }
+
+                throw "Command '$($Command)' failed to complete"
+            }
         }
     }
-    else
+    finally
     {
-        $output = powershell.exe /C "`"$($Command)`" $($Arguments)"
-
-        if (!$?)
+        if (!(Test-PicassioEmpty $Path))
         {
-            if (!(Test-PicassioEmpty $output))
-            {
-                if (!$ShowFullOutput)
-                {
-                    $output = ($output | Select-Object -Last 200)
-                }
-
-                $output | ForEach-Object { Write-PicassioError $_ }
-            }
-
-            throw "Command '$($Command)' failed to complete"
+            Pop-Location
         }
     }
 }

@@ -47,6 +47,7 @@ function Disable-PicassioChocoShimming
     Write-PicassioMessage "> Path: $($Path)"
 
     (Get-ChildItem "$($Path)\**\*.exe" -Recurse).FullName | ForEach-Object {
+        Write-PicassioMessage "> $($_).ignore"
         New-Item -Path "$($_).ignore" -ItemType File -Force | Out-Null
     } | Out-Null
     

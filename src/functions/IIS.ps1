@@ -108,7 +108,7 @@ function Get-PicassioIISAppPool
         return $null
     }
 
-    # return the application pool's name for the site
+    # return the Application Pool's name for the site
     return (Get-Item "IIS:\Sites\$($SiteName)" | Select-Object -ExpandProperty applicationPool)
 }
 
@@ -135,7 +135,7 @@ function Test-PicassioIISAppPool
     # ensure at least one of site/app name was passed
     if ((Test-PicassioEmpty $SiteName) -and (Test-PicassioEmpty $AppPoolName))
     {
-        throw 'At least one of SiteName or AppPoolName must be passed for testing application pools'
+        throw 'At least one of SiteName or AppPoolName must be passed for testing Application Pools'
     }
 
     $exists = $false
@@ -186,9 +186,9 @@ function Restart-PicassioIISAppPool
     Test-PicassioIISAppPool -AppPoolName $Name -ThrowIfNotExists | Out-Null
 
     # restart the app pool
-    Write-PicassioInfo "Recycling application pool: $($Name)"
+    Write-PicassioInfo "Recycling Application Pool: $($Name)"
     Restart-WebAppPool -Name $Name -ErrorAction Stop | Out-Null
-    Write-PicassioSuccess "Application pool recycled"
+    Write-PicassioSuccess "Application Pool recycled"
 }
 
 
@@ -219,10 +219,19 @@ function Start-PicassioIISAppPool
         Stop-PicassioIISAppPool -Name $Name
     }
 
+    Write-PicassioInfo "Starting Application Pool: $($Name)"
+    
+    # check the app pool's state
+    $state = (Get-WebAppPoolState -Name $Name).Value
+    if ($state -ieq 'started')
+    {
+        Write-PicassioSuccess 'Application Pool already started'
+        return
+    }
+
     # start the app pool
-    Write-PicassioInfo "Starting application pool: $($Name)"
     Start-WebAppPool -Name $Name -ErrorAction Stop | Out-Null
-    Write-PicassioSuccess "Application pool started"
+    Write-PicassioSuccess "Application Pool started"
 }
 
 
@@ -244,10 +253,19 @@ function Stop-PicassioIISAppPool
     # ensure the app pool exists
     Test-PicassioIISAppPool -AppPoolName $Name -ThrowIfNotExists | Out-Null
 
+    Write-PicassioInfo "Stopping Application Pool: $($Name)"
+    
+    # check the app pool's state
+    $state = (Get-WebAppPoolState -Name $Name).Value
+    if ((Test-PicassioEmpty $state) -or ($state -ieq 'stopped'))
+    {
+        Write-PicassioSuccess 'Application Pool already stopped'
+        return
+    }
+
     # stop the app pool
-    Write-PicassioInfo "Stopping application pool: $($Name)"
     Stop-WebAppPool -Name $Name -ErrorAction Stop | Out-Null
-    Write-PicassioSuccess "Application pool stopped"
+    Write-PicassioSuccess "Application Pool stopped"
 }
 
 
@@ -274,9 +292,9 @@ function Remove-PicassioIISAppPool
     }
 
     # remove the app pool
-    Write-PicassioInfo "Removing application pool: $($Name)"
+    Write-PicassioInfo "Removing Application Pool: $($Name)"
     Remove-WebAppPool -Name $Name -ErrorAction Stop | Out-Null
-    Write-PicassioSuccess "Application pool removed"
+    Write-PicassioSuccess "Application Pool removed"
 }
 
 
@@ -337,7 +355,7 @@ function New-PicassioIISAppPool
     {
         if ($Credentials -eq $null)
         {
-            throw "No credentials supplied when setting up application pool: $($Name)"
+            throw "No credentials supplied when setting up Application Pool: $($Name)"
         }
 
         $pool.processmodel.username = $Credentials.GetNetworkCredential().UserName
@@ -346,7 +364,7 @@ function New-PicassioIISAppPool
 
     # update the app pool
     $pool | Set-Item -Force -ErrorAction Stop
-    Write-PicassioSuccess "Application pool created"
+    Write-PicassioSuccess "Application Pool created"
 
     # return the app pool
     return $pool
@@ -478,7 +496,7 @@ function Start-PicassioIISWebsite
     # check the app pool exists
     Test-PicassioIISAppPool -SiteName $Name -ThrowIfNotExists | Out-Null
 
-    # first recycle the application pool for the site
+    # first recycle the Application Pool for the site
     $appPool = Get-PicassioIISAppPool -SiteName $Name
     Restart-PicassioIISAppPool -Name $appPool
 
@@ -488,8 +506,17 @@ function Start-PicassioIISWebsite
         Stop-PicassioIISWebsite -Name $Name
     }
 
-    # then start the site itself
     Write-PicassioInfo "Starting website: $($Name)"
+
+    # check the site's state
+    $state = (Get-Website -Name $Name).State
+    if ($state -ieq 'started')
+    {
+        Write-PicassioSuccess 'Website already started'
+        return
+    }
+
+    # then start the site itself
     Start-Website -Name $Name -ErrorAction Stop | Out-Null
     Write-PicassioSuccess 'Website started'
 }
@@ -513,8 +540,17 @@ function Stop-PicassioIISWebsite
     # check the site exists
     Test-PicassioIISWebsite $Name -ThrowIfNotExists | Out-Null
 
-    # stop the site
     Write-PicassioInfo "Stopping website: $($Name)"
+
+    # check the site's state
+    $state = (Get-Website -Name $Name).State
+    if ((Test-PicassioEmpty $state) -or ($state -ieq 'stopped'))
+    {
+        Write-PicassioSuccess 'Website already stopped'
+        return
+    }
+
+    # stop the site
     Stop-Website -Name $Name -ErrorAction Stop | Out-Null
     Write-PicassioSuccess 'Website stopped'
 }

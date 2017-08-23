@@ -3,7 +3,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Badgerati/Fudge/master/LICENSE.txt)
 
 Picassio2 is a redesigned [Picassio](https://github.com/Badgerati/Picassio) that is `code-over-config`.
-Instead of writing a JSON file with steps to run, you can now import the Picassio2 module and write your deployment/automation steps in pure PowerShell. Giving you all the flexibility you could want!
+Instead of writing a JSON file with steps to run, you can now import the Picassio2 module and write your deployment/automation steps in pure PowerShell. Giving you all the flexibility you could want - you can even run steps in parallel and on remote servers.
 
 * [Installing Picassio2](#installing-picassio2)
 * [Features](#features)
@@ -37,6 +37,8 @@ Though to make your lives easier, Picassio2 comes with some inbuilt functions:
 * And many more...
 
 ## Description
+
+Picassio2 is a PowerShell module that helps with automating deployment tasks on local or remote servers.
 
 With Picassio2 there are no JSON, YAML, or any other configuration files - everything is written purely in PowerShell.
 Unlike with the first Picassio where you needed a JSON file with defined steps, you can now import Picassio2 as a module and then just run the script as you would any other PowerShell script.

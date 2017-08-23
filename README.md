@@ -3,12 +3,13 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Badgerati/Fudge/master/LICENSE.txt)
 
 Picassio2 is a redesigned [Picassio](https://github.com/Badgerati/Picassio) that is `code-over-config`.
-Instead of writing a JSON file with steps to run, you can now import the Picassio2 module and write your steps in pure PowerShell. Giving you all the flexibility you could want!
+Instead of writing a JSON file with steps to run, you can now import the Picassio2 module and write your deployment/automation steps in pure PowerShell. Giving you all the flexibility you could want!
 
 * [Installing Picassio2](#installing-picassio2)
 * [Features](#features)
 * [Description](#description)
 * [Example Scripts](#example-scripts)
+* [Extensions](#extensions)
 * [Bugs and Feature Requests](#bugs-and-feature-requests)
 
 ## Installing Picassio2
@@ -17,7 +18,7 @@ Coming soon via `Install-Module` and `Chocolatey`.
 
 ## Features
 
-Picassio2 allows you to write steps completely in PowerShell, meaning you could just use the `Invoke-Step` option and then do whatever you want.
+Picassio2 allows you to write deployment and automation steps completely in PowerShell, meaning you could just use the `Invoke-Step` option and then do whatever you want.
 Though to make your lives easier, Picassio2 comes with some inbuilt functions:
 
 * Ability to use general PowerShell inside and outside of Picassio2's steps
@@ -102,6 +103,16 @@ How do you run these scripts? Well, if you save the last example as `build-cake.
 ```
 
 Yes, it's that simple!
+
+## Extensions
+
+This is a feature pulled over from the original Picassio: Extension scripts. If you have scripts you want to use via Picassio2, and want their functions to be loaded with Picassio2 then place them at:
+
+```plain
+C:\Picassio2\Extensions
+```
+
+Any PowerShell (`*.ps1`) scripts here will be loaded with the Picassio2 module. If you use remoting any of your steps, then these extensions *will* have to exist on the remote machines as well.
 
 ## Bugs and Feature Requests
 

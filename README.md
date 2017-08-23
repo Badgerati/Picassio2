@@ -20,17 +20,20 @@ Coming soon via `Install-Module` and `Chocolatey`.
 Picassio2 allows you to write steps completely in PowerShell, meaning you could just use the `Invoke-Step` option and then do whatever you want.
 Though to make your lives easier, Picassio2 comes with some inbuilt functions:
 
+* Ability to use general PowerShell inside and outside of Picassio2's steps
 * Archive and Extract files/directories with 7-zip
-* Run Cake build scripts
+* Run Cake build scripts for your projects
 * Copy files/directories, create temporary directories, and create temporary network drives to remote systems
 * Create and remove websites, application pools and bindings in IIS
 * Create and remove Windows Services
 * Install and uninstall Windows Features and Optional Features
-* Kill processes like `mmc.exe`
 * Test if software is installed and fail if not installed
 * Setup ACL permissions on files and directories
-* Run steps in parallel
 * Run steps on remote machines - requires Picassio2 to be installed on remote machine
+* Install software using chocolatey (will self-install chocolatey)
+* Manage databases using SSDT scripts
+* Post messages to Slack channels!
+* And many more...
 
 ## Description
 
@@ -62,6 +65,8 @@ Invoke-Step 'Name' {
 ```
 
 * Example of running a single step on a remote machine
+
+> Picassio2 *will* need to be installed on the remote machine
 
 ```powershell
 Import-Module Picassio2

@@ -75,7 +75,7 @@ function Invoke-Step
 
                 Import-Module -Name Picassio2 -ErrorAction Stop
                 & $StepLogic
-            }
+            } -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) -UseSSL
         }
 
         # display duration

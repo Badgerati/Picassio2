@@ -79,6 +79,12 @@ function Install-PicassioChocoPackage
         $Force
     )
 
+    # check if shell is elevated
+    if (!(Test-PicassioAdminUser))
+    {
+        throw 'Chocolatey needs to be run using elevated permissions'
+    }
+
     # check if chocolatey is installed
     if (!(Test-PicassioSoftware -Check 'choco -v'))
     {
@@ -132,7 +138,7 @@ function Install-PicassioChocoPackage
 
         if ($fail)
         {
-            Write-PicassioNotice "`n`n$($output)`n"
+            Write-PicassioWarning "`n`n$($output)`n"
             throw "Failed to install package: $($Name) [$Version]"
         }
     }
@@ -140,7 +146,7 @@ function Install-PicassioChocoPackage
     # check if a reboot could be required
     if ($output -ilike '*exit code 3010*')
     {
-        Write-PicassioNotice "A reboot is required for $($Name)"
+        Write-PicassioWarning "A reboot is required for $($Name)"
     }
     
     Write-PicassioSuccess "Package installed"
@@ -163,6 +169,12 @@ function Uninstall-PicassioChocoPackage
         [switch]
         $Dependencies
     )
+
+    # check if shell is elevated
+    if (!(Test-PicassioAdminUser))
+    {
+        throw 'Chocolatey needs to be run using elevated permissions'
+    }
 
     # check if chocolatey is installed
     if (!(Test-PicassioSoftware -Check 'choco -v'))
@@ -198,7 +210,7 @@ function Uninstall-PicassioChocoPackage
 
         if ($fail)
         {
-            Write-PicassioNotice "`n`n$($output)`n"
+            Write-PicassioWarning "`n`n$($output)`n"
             throw "Failed to uninstall package: $($Name)"
         }
     }
@@ -206,7 +218,7 @@ function Uninstall-PicassioChocoPackage
     # check if a reboot could be required
     if ($output -ilike '*exit code 3010*')
     {
-        Write-PicassioNotice "A reboot is required for $($Name)"
+        Write-PicassioWarning "A reboot is required for $($Name)"
     }
     
     Write-PicassioSuccess "Package uninstalled"

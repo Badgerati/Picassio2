@@ -33,7 +33,7 @@ function Invoke-PicassioArchive
     Write-PicassioMessage "> From: $($Path)"
     Write-PicassioMessage ">   To: $($ZipPath)"
 
-    Invoke-PicassioCommand -Command '7z' -Arguments "a -tzip -y `"$($ZipPath)`" `"$($Path)`""
+    Invoke-PicassioCommand -Command '7z' -Arguments "a -t7z -y `"$($ZipPath)`" `"$($Path)`""
 
     Write-PicassioSuccess 'Archiving complete'
 }

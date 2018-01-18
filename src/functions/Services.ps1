@@ -133,6 +133,71 @@ function New-PicassioService
 
 <#
 #>
+function Update-PicassioServicePath
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+        
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path,
+
+        [switch]
+        $ThrowIfNotExists,
+
+        [switch]
+        $Start
+    )
+
+    # check if the service exists
+    $exists = Test-PicassioService -Name $Name
+
+    # check if we need to throw an error when it doesn't exists
+    if (!$exists -and $ThrowIfNotExists)
+    {
+        throw "Service does not exist to have binary path updated: $($Name)"
+    }
+
+    # if it doesn't exist, just return
+    if (!$exists)
+    {
+        Write-PicassioInfo "Service does not exist to have binary path updated: $($Name)"
+        return
+    }
+
+    # check that the service path exists
+    Test-PicassioPath -Path $Path -ThrowIfNotExists | Out-Null
+
+    # first stop the servive
+    Stop-PicassioService -Name $Name
+
+    # attempt to update the service
+    Write-PicassioInfo "Updating service: $($Name)"
+    Write-PicassioMessage "> Path: $($Path)"
+
+    sc.exe config "$($Name)" binPath= "$($Path)" | Out-Null
+
+    if (!$?)
+    {
+        throw "Failed to update service: $($Name)"
+    }
+
+    # do we need to start the service?
+    if ($Start)
+    {
+        Start-PicassioService -Name $Name
+    }
+
+    Write-PicassioSuccess 'Service path updated'
+}
+
+
+<#
+#>
 function Remove-PicassioService
 {
     param (

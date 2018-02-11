@@ -18,7 +18,7 @@ Coming soon via `Install-Module` and `Chocolatey`.
 
 ## Features
 
-Picassio2 allows you to write deployment and automation steps completely in PowerShell, meaning you could just use the `Invoke-Step` option and then do whatever you want.
+Picassio2 allows you to write deployment and automation steps completely in PowerShell, meaning you could just use the `Step` option and then do whatever you want.
 Though to make your lives easier, Picassio2 comes with some inbuilt functions:
 
 * Ability to use general PowerShell inside and outside of Picassio2's steps
@@ -50,19 +50,19 @@ Unlike with the first Picassio where you needed a JSON file with defined steps, 
 ```powershell
 Import-Module Picassio2
 
-Invoke-Step 'Archive' {
+Step 'Archive' {
     # archive a directory
     Invoke-PicassioArchive -Path 'C:\path\to\some\folder' -ZipPath 'C:\path\to\some\folder.7z'
 }
 
 Write-Host 'Random PowerShell between steps!'
 
-Invoke-Step 'Build Solution' {
+Step 'Build Solution' {
     # run a cake build script
     Invoke-PicassioCake -Path 'C:\path\to\your\repo'
 }
 
-Invoke-Step 'Name' {
+Step 'Name' {
     # plus any other powershell you want
 }
 ```
@@ -74,7 +74,7 @@ Invoke-Step 'Name' {
 ```powershell
 Import-Module Picassio2
 
-Invoke-Step 'Install Features' -ComputerName 'Name' -Credentials (Get-Credential) {
+Step 'Install Features' -ComputerName 'Name' -Credentials (Get-Credential) {
     # install iis on remote machine
     Install-PicassioWindowsFeature -Name 'Web-Server' -IncludeAllSubFeatures
 }
@@ -85,7 +85,7 @@ Invoke-Step 'Install Features' -ComputerName 'Name' -Credentials (Get-Credential
 ```powershell
 Import-Module Picassio2
 
-Invoke-ParallelStep 'Multiple Cake Builds' @(
+ParallelStep 'Multiple Cake Builds' @(
     {
         Invoke-PicassioCake -Path 'C:\path\to\your\repo1'
     },

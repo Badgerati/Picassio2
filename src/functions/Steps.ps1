@@ -7,7 +7,7 @@
     If you supply a ComputerName that is the local machine, no credentials will be
     requested.
 #>
-function Invoke-Step
+function Step
 {
     param (
         [Parameter(Mandatory=$true)]
@@ -24,7 +24,10 @@ function Invoke-Step
         $ComputerName,
 
         [pscredential]
-        $Credentials = $null
+        $Credentials = $null,
+
+        [switch]
+        $UseSSL
     )
 
     # check if ComputerName is the local machine
@@ -75,7 +78,7 @@ function Invoke-Step
 
                 Import-Module -Name Picassio2 -ErrorAction Stop
                 & $StepLogic
-            } -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) -UseSSL
+            } -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) -UseSSL:$UseSSL
         }
 
         # display duration
@@ -93,9 +96,9 @@ function Invoke-Step
 
 
 <#
-    invokes multiple 'Invoke-Step' steps in parallel
+    invokes multiple 'Step' steps in parallel
 #>
-function Invoke-ParallelStep
+function ParallelStep
 {
     param (
         [Parameter(Mandatory=$true)]
@@ -129,7 +132,7 @@ function Invoke-ParallelStep
             Import-Module $using:modulePath -ErrorAction Stop
 
             $sb = ([scriptblock]::Create($block))
-            Invoke-Step -Name $using:Name -ScriptBlock $sb -ComputerName $using:ComputerName -Credentials $using:Credentials
+            Step -Name $using:Name -ScriptBlock $sb -ComputerName $using:ComputerName -Credentials $using:Credentials
         }
 
         $jobs += Start-Job -ScriptBlock $code -ArgumentList $block

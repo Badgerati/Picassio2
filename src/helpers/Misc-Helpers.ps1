@@ -48,9 +48,14 @@ function ConvertFrom-PicassioJson
         $Value
     )
 
-    if (!(Test-PicassioEmpty $Path))
+    if (!(Test-PicassioEmpty $Path) -and !(Test-PicassioPath $Path))
     {
         $Value = Get-Content $Path -Force -ErrorAction Stop
+    }
+
+    if (Test-PicassioEmpty $Value)
+    {
+        return $null
     }
 
     Add-Type -Assembly System.Web.Extensions

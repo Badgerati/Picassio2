@@ -31,8 +31,8 @@ function Sync-PicassioWebDeployPaths
         $Exclude = @(),
 
         [string]
-        $WebDeployPath = $null,
-        
+        $ToolPath = $null,
+
         [pscredential]
         $Credentials = $null,
 
@@ -41,12 +41,12 @@ function Sync-PicassioWebDeployPaths
     )
 
     # check that webdeploy tool is installed
-    if (Test-PicassioEmpty $WebDeployPath)
+    if (Test-PicassioEmpty $ToolPath)
     {
-        $WebDeployPath = Get-PicassioWebDeployDefaultToolPath
+        $ToolPath = Get-PicassioWebDeployDefaultToolPath
     }
 
-    Test-PicassioPath $WebDeployPath -ThrowIfNotExists | Out-Null
+    Test-PicassioPath $ToolPath -ThrowIfNotExists | Out-Null
 
     # check that the source path exists
     Test-PicassioPath $Source -ThrowIfNotExists | Out-Null
@@ -80,11 +80,11 @@ function Sync-PicassioWebDeployPaths
 
     if ($Quiet)
     {
-        & $WebDeployPath $_args | Out-Null
+        & $ToolPath $_args | Out-Null
     }
     else
     {
-        & $WebDeployPath $_args
+        & $ToolPath $_args
     }
 
     # check for errors
@@ -113,8 +113,8 @@ function Sync-PicassioWebDeployServers
         $Destination,
 
         [string]
-        $WebDeployPath = $null,
-        
+        $ToolPath = $null,
+
         [pscredential]
         $Credentials = $null,
 
@@ -123,12 +123,12 @@ function Sync-PicassioWebDeployServers
     )
 
     # check that webdeploy is installed
-    if (Test-PicassioEmpty $WebDeployPath)
+    if (Test-PicassioEmpty $ToolPath)
     {
-        $WebDeployPath = Get-PicassioWebDeployDefaultToolPath
+        $ToolPath = Get-PicassioWebDeployDefaultToolPath
     }
 
-    Test-PicassioPath $WebDeployPath -ThrowIfNotExists | Out-Null
+    Test-PicassioPath $ToolPath -ThrowIfNotExists | Out-Null
 
     # build the credentials string
     $creds_str = [string]::Empty
@@ -151,11 +151,11 @@ function Sync-PicassioWebDeployServers
 
     if ($Quiet)
     {
-        & $WebDeployPath $_args | Out-Null
+        & $ToolPath $_args | Out-Null
     }
     else
     {
-        & $WebDeployPath $_args
+        & $ToolPath $_args
     }
 
     # check for errors

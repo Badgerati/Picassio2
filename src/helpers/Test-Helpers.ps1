@@ -16,7 +16,7 @@ function Test-PicassioPath
 
     if (!$exists -and $ThrowIfNotExists)
     {
-        throw "The following path does not exist: $($Path)"
+        throw "Path does not exist: $($Path)"
     }
 
     return $exists
@@ -75,7 +75,7 @@ function Test-PicassioLocalComputer
         $ComputerName
     )
 
-    # if null/whitespace or same as $env:COMPUTERNAME then return true
+    # if empty or same as $env:COMPUTERNAME then return true
     if ((Test-PicassioEmpty $ComputerName) -or ($env:COMPUTERNAME -ieq $ComputerName))
     {
         return $true
@@ -130,7 +130,7 @@ function Test-PicassioWin64
 
 
 <#
-    checks to see if the file at passed path is a valid XML file
+    checks to see if a file at passed path is valid XML
 #>
 function Test-PicassioXmlContent
 {
@@ -163,6 +163,12 @@ function Test-PicassioXmlContent
 #>
 function Test-PicassioAdminUser
 {
+    # check the current platform, if it's unix then return true
+    if ($PSVersionTable.Platform -ieq 'unix')
+    {
+        return $true
+    }
+
     try
     {
         $principal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
@@ -208,7 +214,7 @@ function Test-PicassioSoftware
         {
             return $true
         }
-        
+
         Invoke-Expression -Command $Check | Out-Null
         return $true
     }

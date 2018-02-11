@@ -8,16 +8,16 @@ $path = (Split-Path -Parent -Path (Split-Path -Parent -Path $MyInvocation.MyComm
 Import-Module "$($path)/src/Picassio2.psm1" -ErrorAction Stop
 
 
-Invoke-Step 'Single' {
+Step 'Single' {
     Write-PicassioWarning 'Ooh, its a warning!'
 }
 
-Invoke-Step 'File Hash' {
+Step 'File Hash' {
     $hash = Get-PicassioPathHash -Path $path
     Write-PicassioSuccess "Hash: $($hash)"
 }
 
-Invoke-ParallelStep 'ParallelTest' @(
+ParallelStep 'ParallelTest' @(
     {
         Write-PicassioInfo 'PARA1'
     },
@@ -30,7 +30,7 @@ Invoke-ParallelStep 'ParallelTest' @(
     }
 )
 
-Invoke-Step 'Windows Feature' {
+Step 'Windows Feature' {
     $exists = Test-PicassioWindowsFeatureInstalled -Name 'Web-Server' -Optional
     Write-Host "Installed: $($exists)"
 }
@@ -55,6 +55,6 @@ $fields = @(
     }
 )
 
-Invoke-Step 'Slack Message' {
+Step 'Slack Message' {
     Send-PicassioSlackAttachments -Channel '<CHANNEL>' -APIToken '<TOKEN>' -Colour 'good' -Fallback 'eek' -Fields $fields -Title 'Example Message'
 }

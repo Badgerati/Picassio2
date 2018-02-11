@@ -11,7 +11,7 @@ function Copy-PicassioFiles
         [ValidateNotNullOrEmpty()]
         [string]
         $From,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -87,6 +87,45 @@ function Copy-PicassioFiles
 
 <#
 #>
+function Search-PicassioFiles
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Pattern,
+
+        [string[]]
+        $ExcludeFiles = $null,
+
+        [string[]]
+        $IncludeFiles = $null
+    )
+
+    # ensure the From path exists
+    Test-PicassioPath $From -ThrowIfNotExists
+
+    # search path for files containing pattern
+    Write-PicassioInfo "Searching files for: $($Pattern)"
+    Write-PicassioMessage "> Path: $($Path)"
+
+    $files = (Get-ChildItem $Path -Recurse -Include $IncludeFiles -Exclude $ExcludeFiles |
+                Select-String -Pattern $Pattern |
+                Group-Object path |
+                Select-Object -ExpandProperty Name)
+
+    Write-PicassioInfo "Found $(($files | Measure-Object).Count) files"
+    return $files
+}
+
+
+<#
+#>
 function Get-PicassioPathHash
 {
     param (
@@ -98,12 +137,13 @@ function Get-PicassioPathHash
 
     # ensure the path exists
     Test-PicassioPath -Path $Path -ThrowIfNotExists | Out-Null
+    $Path = Resolve-Path -Path $Path
 
     # is this path a directory or a file?
     $isDirectory = Test-PicassioPathDirectory -Path $Path
 
     # general variables
-    $md5 = New-Object -TypeName 'System.Security.Cryptography.MD5CryptoServiceProvider'
+    $sha1 = New-Object -TypeName 'System.Security.Cryptography.SHA1CryptoServiceProvider'
     $bytes = $null
 
     # compute bytes of a directory
@@ -115,7 +155,7 @@ function Get-PicassioPathHash
         Get-ChildItem -Path $Path -Recurse |
             Where-Object { !$_.PSIsContainer } |
             ForEach-Object {
-                $fullHash += ([System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes($_.FullName))))
+                $fullHash += ([System.BitConverter]::ToString($sha1.ComputeHash([System.IO.File]::ReadAllBytes($_.FullName))))
             }
         
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($fullHash)
@@ -129,7 +169,7 @@ function Get-PicassioPathHash
     }
 
     # return the MD5 hash for the path
-    return ([System.BitConverter]::ToString($md5.ComputeHash($bytes)))
+    return ([System.BitConverter]::ToString($sha1.ComputeHash($bytes)))
 }
 
 
@@ -163,7 +203,7 @@ function New-PicassioTempFolder
 #>
 function New-PicassioNetworkDrive
 {
-    param (        
+    param (
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -184,7 +224,7 @@ function New-PicassioNetworkDrive
 
     # remove any colons or slashes
     $DriveName = $DriveName.TrimEnd(':', '\', '/')
-    
+
     Write-PicassioInfo "Creating new network drive"
     Write-PicassioMessage "> From: $($RemotePath)"
     Write-PicassioMessage ">   To: $($DriveName):\"

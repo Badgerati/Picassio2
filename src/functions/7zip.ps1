@@ -8,7 +8,7 @@ function Invoke-PicassioArchive
         [ValidateNotNullOrEmpty()]
         [string]
         $Path,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -33,7 +33,7 @@ function Invoke-PicassioArchive
     Write-PicassioMessage "> From: $($Path)"
     Write-PicassioMessage ">   To: $($ZipPath)"
 
-    Invoke-PicassioCommand -Command '7z' -Arguments "a -t7z -y `"$($ZipPath)`" `"$($Path)`""
+    Invoke-PicassioCommand -Command "7z a -t7z -y `"$($ZipPath)`" `"$($Path)`""
 
     Write-PicassioSuccess 'Archiving complete'
 }
@@ -48,7 +48,7 @@ function Invoke-PicassioExtract
         [ValidateNotNullOrEmpty()]
         [string]
         $Path,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -57,7 +57,7 @@ function Invoke-PicassioExtract
 
     # ensure that 7zip is installed
     Test-PicassioSoftware -Check '7z' -Name '7zip' -ThrowIfNotExists | Out-Null
-    
+
     # ensure that the zip path to extract exists
     Test-PicassioPath -Path $ZipPath -ThrowIfNotExists | Out-Null
 
@@ -73,7 +73,7 @@ function Invoke-PicassioExtract
     Write-PicassioMessage "> From: $($ZipPath)"
     Write-PicassioMessage ">   To: $($Path)"
 
-    Invoke-PicassioCommand -Command '7z' -Arguments "x -y `"$($ZipPath)`" -o`"$($Path)`""
+    Invoke-PicassioCommand -Command "7z x -y `"$($ZipPath)`" -o`"$($Path)`""
 
     Write-PicassioSuccess 'Extraction complete'
 }

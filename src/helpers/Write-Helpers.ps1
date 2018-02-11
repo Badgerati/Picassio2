@@ -1,5 +1,4 @@
 
-
 <#
     Writes an line to the console
 #>

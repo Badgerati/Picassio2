@@ -8,12 +8,12 @@ function Update-PicassioAssemblyInfo
         [ValidateNotNullOrEmpty()]
         [string]
         $Path,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
-        
+
         [string]
         $VersionInfo = $null
     )

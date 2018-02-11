@@ -3,7 +3,66 @@
 #>
 function Get-PicassioSSDTDefaultToolPath
 {
-    return 'C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\SqlPackage.exe'
+    @('100', '110', '120', '130') | ForEach-Object {
+        $path = "C:\Program Files (x86)\Microsoft SQL Server\$($_)\DAC\bin\SqlPackage.exe"
+        if (Test-PicassioPath $path)
+        {
+            return $path
+        }
+    }
+}
+
+
+<#
+#>
+function Find-PicassioSSDTMissingSqlFiles
+{
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path
+    )
+
+    # ensure the path exists
+    Test-PicassioPath $Path -ThrowIfNotExists
+    $Path = Resolve-Path $Path
+
+    # grab the sqlproj files
+    Write-PicassioInfo "Finding files missing in SQL projects"
+    Write-PicassioMessage "> Path: $($Path)"
+
+    $sqlprojs = Get-ChildItem $Path -Include @('*.sqlproj') -Recurse
+    $sqlprojs | ForEach-Object { Write-PicassioMessage "> Project: $($_.Name)" }
+
+    # get a list of sql files in the projects
+    $regex = '(Build|None|PostDeploy|PreDeploy)\s+Include="(.*?.sql)"'
+    $files = @{}
+
+    foreach ($proj in $sqlprojs)
+    {
+        $dir = Split-Path -Parent -Path $proj.FullName
+
+        $lines = Get-Content $proj
+        foreach ($line in $lines)
+        {
+            if ($line -imatch $regex)
+            {
+                $p = Join-Path $dir $Matches[2]
+                if (!$files.ContainsKey($p))
+                {
+                    $files.Add($p, $true)
+                }
+            }
+        }
+    }
+
+    # now find any sql files not in the projects
+    $missing = (Get-ChildItem $Path -Include @('*.sql') -Recurse |
+                    Where-Object { !$files.Contains($_.FullName) -and $_.FullName -inotmatch '.*\\(obj|bin)\\.*' })
+
+    Write-PicassioInfo "Found $(($missing | Measure-Object).Count) missing SQL files"
+    return $missing
 }
 
 
@@ -28,7 +87,7 @@ function Publish-PicassioSSDT
         $Arguments = $null,
 
         [string]
-        $SqlPackagePath = $null,
+        $ToolPath = $null,
 
         [switch]
         $BackupFirst,
@@ -41,12 +100,12 @@ function Publish-PicassioSSDT
     )
 
     # check that the ssdt sqlpackage tool is installed
-    if (Test-PicassioEmpty $SqlPackagePath)
+    if (Test-PicassioEmpty $ToolPath)
     {
-        $SqlPackagePath =  Get-PicassioSSDTDefaultToolPath
+        $ToolPath =  Get-PicassioSSDTDefaultToolPath
     }
 
-    Test-PicassioPath $SqlPackagePath -ThrowIfNotExists | Out-Null
+    Test-PicassioPath $ToolPath -ThrowIfNotExists | Out-Null
 
     # ensure that the dacpac path exist
     Test-PicassioPath $DacPac -ThrowIfNotExists | Out-Null
@@ -94,10 +153,10 @@ function Publish-PicassioSSDT
         Write-PicassioMessage "> Publish: $($Publish)"
     }
 
-    $toolLocation = Split-Path -Parent -Path $SqlPackagePath
-    $toolName = ".\$(Split-Path -Leaf -Path $SqlPackagePath)"
+    $toolLocation = Split-Path -Parent -Path $ToolPath
+    $toolName = ".\$(Split-Path -Leaf -Path $ToolPath)"
 
-    Invoke-PicassioCommand -Command $toolName -Arguments $_args -Path $toolLocation -ShowFullOutput
+    Invoke-PicassioCommand -Command "$($toolName) $($_args)" -Path $toolLocation -ShowFullOutput
 
     Write-PicassioSuccess "SSDT published"
 }
@@ -126,19 +185,19 @@ function Export-PicassioSSDT
         $Arguments = $null,
 
         [string]
-        $SqlPackagePath = $null,
+        $ToolPath = $null,
 
         [switch]
         $Force
     )
 
     # check that the ssdt sqlpackage tool is installed
-    if (Test-PicassioEmpty $SqlPackagePath)
+    if (Test-PicassioEmpty $ToolPath)
     {
-        $SqlPackagePath =  Get-PicassioSSDTDefaultToolPath
+        $ToolPath =  Get-PicassioSSDTDefaultToolPath
     }
 
-    Test-PicassioPath $SqlPackagePath -ThrowIfNotExists | Out-Null
+    Test-PicassioPath $ToolPath -ThrowIfNotExists | Out-Null
 
     # ensure that the dacpac path exist
     Test-PicassioPath $DacPac -ThrowIfNotExists | Out-Null
@@ -184,10 +243,10 @@ function Export-PicassioSSDT
     Write-PicassioMessage "> DacPac: $($DacPac)"
     Write-PicassioMessage "> Output: $($Output)"
 
-    $toolLocation = Split-Path -Parent -Path $SqlPackagePath
-    $toolName = ".\$(Split-Path -Leaf -Path $SqlPackagePath)"
+    $toolLocation = Split-Path -Parent -Path $ToolPath
+    $toolName = ".\$(Split-Path -Leaf -Path $ToolPath)"
 
-    Invoke-PicassioCommand -Command $toolName -Arguments $_args -Path $toolLocation -ShowFullOutput
+    Invoke-PicassioCommand -Command "$($toolName) $($_args)" -Path $toolLocation -ShowFullOutput
 
     Write-PicassioSuccess "SSDT script generated"
 }

@@ -122,19 +122,20 @@ function Install-PicassioChocoPackage
     # if it's not installed or we have a specific version, just install it normally
     if (!$list.ContainsKey($Name) -or $Version -ine 'latest')
     {
-        $output = choco install $Name -y $versionArg $sourceArg $forceArg $Arguments
+        $output = Invoke-Expression "choco install $Name -y $versionArg $sourceArg $forceArg $Arguments"
     }
 
     # else it is installed, and version is latest then upgrade
     elseif ($list.ContainsKey($Name) -and $Version -ieq 'latest')
     {
-        $output = choco upgrade $Name -y $versionArg $sourceArg $forceArg $Arguments
+        $output = Invoke-Expression "choco upgrade $Name -y $versionArg $sourceArg $forceArg $Arguments"
     }
 
     # check if the install failed
-    if (!$?)
+    $lastcode = $LASTEXITCODE
+    if (!$? -or ($lastcode -ne 0 -and $lastcode -ne 3010))
     {
-        $fail = !($output -ilike '*has been successfully installed*')
+        $fail = !($output -ilike '*has been successfully installed*' -or $output -ilike '*has been installed*')
 
         if ($fail)
         {
@@ -144,11 +145,11 @@ function Install-PicassioChocoPackage
     }
 
     # check if a reboot could be required
-    if ($output -ilike '*exit code 3010*')
+    if ($output -ilike '*exit code 3010*' -or $lastcode -eq 3010)
     {
         Write-PicassioWarning "A reboot is required for $($Name)"
     }
-    
+
     Write-PicassioSuccess "Package installed"
 }
 
@@ -204,7 +205,8 @@ function Uninstall-PicassioChocoPackage
     $output = choco uninstall $Name -y $dependArg $Arguments
 
     # check if the uninstall failed
-    if (!$?)
+    $lastcode = $LASTEXITCODE
+    if (!$? -or ($lastcode -ne 0 -and $lastcode -ne 3010))
     {
         $fail = !($output -ilike '*has been successfully uninstalled*' -or $output -ilike '*Cannot uninstall a non-existent package*')
 
@@ -216,11 +218,11 @@ function Uninstall-PicassioChocoPackage
     }
 
     # check if a reboot could be required
-    if ($output -ilike '*exit code 3010*')
+    if ($output -ilike '*exit code 3010*' -or $lastcode -eq 3010)
     {
         Write-PicassioWarning "A reboot is required for $($Name)"
     }
-    
+
     Write-PicassioSuccess "Package uninstalled"
 }
 
@@ -236,7 +238,7 @@ function Get-PicassioChocoList
     }
 
     $map = @{}
-    
+
     (choco list -lo) | ForEach-Object {
         $row = $_ -ireplace ' Downloads cached for licensed users', ''
         if ($row -imatch '^(?<name>.*?)\s+((?<version>[\d\.]+)(\s+\[Approved\]){0,1}(\s+-\s+Possibly broken){0,1}).*?$')

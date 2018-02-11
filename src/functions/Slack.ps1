@@ -15,24 +15,24 @@ function Send-PicassioSlackMessage
         [ValidateNotNullOrEmpty()]
         [string]
         $Channel,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
         $Message,
-        
+
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]
         $APIToken,
-        
+
         [string]
         $Colour = $null,
-        
+
         [ValidateNotNullOrEmpty()]
         [string]
         $Username = 'Picassio',
-        
+
         [ValidateNotNullOrEmpty()]
         [string]
         $IconUrl = 'https://cdn.rawgit.com/Badgerati/Picassio2/master/images/icon.png'

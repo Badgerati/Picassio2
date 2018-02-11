@@ -15,7 +15,7 @@ function Invoke-PicassioCake
     )
 
     # ensure that cake is installed
-    Test-PicassioSoftware -Check 'cake.exe -version' -Name 'cake' -ThrowIfNotExists | Out-Null
+    Test-PicassioSoftware -Check 'cake -version' -Name 'cake' -ThrowIfNotExists | Out-Null
 
     # ensure that the path to run cake exists
     Test-PicassioPath -Path $Path -ThrowIfNotExists | Out-Null
@@ -28,7 +28,7 @@ function Invoke-PicassioCake
         Push-Location $Path
         Write-PicassioInfo "Running cake script: $($CakeFile)"
 
-        Invoke-PicassioCommand -Command 'cake.exe' -Arguments $CakeFile
+        Invoke-PicassioCommand -Command "cake $($CakeFile)"
 
         Write-PicassioSuccess 'Cake build complete'
     }

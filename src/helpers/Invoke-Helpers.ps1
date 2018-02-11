@@ -11,19 +11,13 @@ function Invoke-PicassioCommand
         $Command,
 
         [string]
-        $Arguments,
-
-        [string]
         $Path,
 
         [switch]
-        $ShowFullOutput,
-
-        [switch]
-        $UseCommandPrompt
+        $ShowFullOutput
     )
 
-    Write-PicassioInfo "Running: $($Command) $($Arguments)"
+    Write-PicassioInfo "Running: $($Command)"
 
     if (!(Test-PicassioEmpty $Path))
     {
@@ -38,44 +32,22 @@ function Invoke-PicassioCommand
             Push-Location $Path
         }
 
-        if ($UseCommandPrompt)
+        $output = Invoke-Expression "$($Command)"
+
+        $code = $LASTEXITCODE
+        if (!$? -or $lastcode -ne 0)
         {
-            $output = cmd.exe /C "`"$($Command)`" $($Arguments)"
-            $code = $LASTEXITCODE
-
-            if ($code -ne 0)
+            if (!(Test-PicassioEmpty $output))
             {
-                if (!(Test-PicassioEmpty $output))
+                if (!$ShowFullOutput)
                 {
-                    if (!$ShowFullOutput)
-                    {
-                        $output = ($output | Select-Object -Last 200)
-                    }
-
-                    $output | ForEach-Object { Write-PicassioError $_ }
+                    $output = ($output | Select-Object -Last 200)
                 }
 
-                throw "Command '$($Command)' failed to complete. Exit code: $code"
+                $output | ForEach-Object { Write-PicassioError $_ }
             }
-        }
-        else
-        {
-            $output = powershell.exe /C "`"$($Command)`" $($Arguments)"
 
-            if (!$?)
-            {
-                if (!(Test-PicassioEmpty $output))
-                {
-                    if (!$ShowFullOutput)
-                    {
-                        $output = ($output | Select-Object -Last 200)
-                    }
-
-                    $output | ForEach-Object { Write-PicassioError $_ }
-                }
-
-                throw "Command '$($Command)' failed to complete"
-            }
+            throw "Command failed to complete. Exit code: $code"
         }
     }
     finally
@@ -99,7 +71,7 @@ function Invoke-PicassioWhich
         $Command
     )
 
-    return (Get-Command -Name $Command -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Definition)
+    return (Get-Command -Name $Command -ErrorAction SilentlyContinue).Definition
 }
 
 
@@ -109,7 +81,7 @@ function Invoke-PicassioRestEndpoint
 {
     param (
         [Parameter(Mandatory=$true)]
-        [ValidateSet('Post', 'Get', 'Put', 'Patch', 'Delete')]
+        [ValidateSet('Delete', 'Get', 'Head', 'Merge', 'Options', 'Patch', 'Post', 'Put', 'Trace')]
         [string]
         $Method,
 
